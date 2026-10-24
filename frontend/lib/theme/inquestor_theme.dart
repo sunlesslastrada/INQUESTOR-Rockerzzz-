@@ -25,6 +25,15 @@ class InquestorColors {
   /// Signature brand accent: flat, muted, non-metallic, strictly for focal dots/markers.
   static const Color antiqueGold = Color(0xFFAD925B);
 
+  /// Semantic Status: Muted Coral Red for counterfeit alerts
+  static const Color coralRed = Color(0xFFBC4749);
+
+  /// Semantic Status: Forest Green for verified status
+  static const Color forestGreen = Color(0xFF386641);
+
+  /// Semantic Status: Amber for out-of-scope warnings
+  static const Color amber = Color(0xFFC28532);
+
   /// Subtle interactive hover overlay.
   static const Color hoverHighlight = Color(0xFFF0F0EE);
 }

@@ -386,7 +386,7 @@ class _HeroSection extends StatelessWidget {
                   Text(
                     'Autonomous Forensic Product Verification',
                     style: TextStyle(
-                      color: InquestorColors.graphite.withOpacity(0.85),
+                      color: InquestorColors.graphite.withValues(alpha: 0.85),
                       fontSize: isMobile ? 11 : 12,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.6,
@@ -626,14 +626,14 @@ class _PipelineCardState extends State<_PipelineCard> {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: _isHovered
-                ? InquestorColors.graphite.withOpacity(0.35)
+                ? InquestorColors.graphite.withValues(alpha: 0.35)
                 : InquestorColors.hairlineBorder,
             width: 1.0,
           ),
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: InquestorColors.graphite.withOpacity(0.04),
+                    color: InquestorColors.graphite.withValues(alpha: 0.04),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -998,7 +998,7 @@ class _FooterSection extends StatelessWidget {
           'Inquestor Forensic Engine · Built with TinyFish APIs for HackIIITD · Explainable Decision Architecture',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: InquestorColors.softSlate.withOpacity(0.9),
+            color: InquestorColors.softSlate.withValues(alpha: 0.9),
             fontSize: 12,
             fontWeight: FontWeight.w400,
             letterSpacing: 0.3,

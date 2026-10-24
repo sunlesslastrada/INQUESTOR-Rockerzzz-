@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inquestor/landing_page.dart';
-import 'package:inquestor/theme/inquestor_theme.dart';
 
 void main() {
   testWidgets('LandingPage renders brand mark, headline, and pipeline sections', (tester) async {

@@ -1,0 +1,19 @@
+# Flutter & Dart artifacts
+**/.dart_tool/
+**/build/
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Python & virtual environments
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+**/.env
+
+# OS / Editor clutter
+**/.DS_Store
+**/Thumbs.db
