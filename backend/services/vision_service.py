@@ -154,7 +154,7 @@ Return ONLY valid JSON matching this schema:
 """
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash-lite",
             contents=[pil_image, prompt],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
