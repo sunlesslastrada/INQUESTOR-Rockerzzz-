@@ -44,7 +44,6 @@ Examine the provided cropped image of a product logo or packaging emblem:
    - Altered/spoofed typography or slight misspellings (e.g., 'Sorny', 'Abibas', altered fonts).
    - Distorted aspect ratios, uneven glyph weights, or crude vector artifacts.
    - Genuine trademark glyphs and proportion consistency.
-4. Return can_proceed in the JSON as false if detected logo is not under the category of 'Electronics' or 'Medicine'
 
 Return ONLY valid JSON matching this exact structure:
 {
@@ -56,6 +55,7 @@ Return ONLY valid JSON matching this exact structure:
   "reasoning": "Clear 1-2 sentence forensic justification",
   "can_proceed": true
 }
+Return can_proceed in the JSON as false if detected logo is not under the category of 'Electronics' or 'Medicine'
 """
 
         # Call Gemini Vision with JSON response constraint
