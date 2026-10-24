@@ -48,6 +48,11 @@ class VerificationRequest(BaseModel):
     claims: ExtractedProductClaims
     tier0_logo_summary: Optional[Dict[str, Any]] = None
     force_continue: bool = Field(False, description="Continue audit despite Tier-0/Tier-2 red flags")
+    mock_mode: Optional[bool] = Field(None, description="Override global MOCK_MODE per request")
+    demo_preset: Optional[str] = Field(
+        None,
+        description="Optional judge preset: 'cloned_headset' | 'recalled_medicine' | 'generic_unverified'"
+    )
 
 
 class AuditCheckItem(BaseModel):
