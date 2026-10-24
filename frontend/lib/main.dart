@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'landing_page.dart';
-import 'screens/page2_placeholder_page.dart';
+import 'screens/audit_staging_page.dart';
+import 'screens/final_report_page.dart';
 import 'screens/tier0_inspection_page.dart';
+import 'theme/inquestor_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +24,8 @@ class InquestorApp extends StatelessWidget {
       routes: {
         '/': (context) => const LandingPage(),
         '/tier0': (context) => const Tier0InspectionPage(),
-        '/page2': (context) => const Page2PlaceholderPage(),
+        '/page2': (context) => const AuditStagingPage(),
+        '/report': (context) => const FinalReportPage(),
       },
     );
   }

@@ -106,6 +106,7 @@ class Tier0InspectionPageState extends State<Tier0InspectionPage> {
         'detected_brand': response.detectedBrand,
         'detected_category': response.detectedCategory,
         'is_logo_valid': response.isLogoValid,
+        'reasoning': response.reasoning,
         'bypassed': isBypassed,
       },
     );
