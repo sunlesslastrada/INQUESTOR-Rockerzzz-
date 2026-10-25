@@ -177,10 +177,13 @@ async def verify_electronics_serial_agent(
 async def audit_cdsco_recalled_batch_fetch_fallback(
     batch_number: str, drug_name: str, api_key: str
 ) -> Dict[str, Any]:
-    """Fallback Fetch API for CDSCO NSQ page."""
+    """Fallback Fetch API for CDSCO NSQ page: prioritizes Batch No, falls back to Name of Product."""
+    clean_batch = (batch_number or "").strip()
+    clean_drug = (drug_name or "").strip()
+
     payload = {
         "urls": [CDSCO_NSQ_URL],
-        "purpose": f"Search for batch number '{batch_number}' or drug name '{drug_name}' in NSQ recall tables.",
+        "purpose": f"Search for Batch No '{clean_batch}' (priority) or Name of Product '{clean_drug}' in the CDSCO NSQ recall table.",
         "format": "markdown",
     }
     headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
@@ -193,14 +196,28 @@ async def audit_cdsco_recalled_batch_fetch_fallback(
                 text = extract_text_from_response(res_json).lower()
 
                 if text and len(text) > 10:
-                    is_recalled = batch_number.lower().strip() in text
+                    # Priority 1: Check Batch Number
+                    batch_matched = bool(clean_batch and clean_batch.lower() in text)
+                    # Priority 2: Fallback to Name of Product if Batch not matched/present
+                    drug_matched = bool(not batch_matched and clean_drug and clean_drug.lower() in text)
+
+                    is_recalled = batch_matched or drug_matched
+                    matched_by = "Batch No" if batch_matched else ("Name of Product" if drug_matched else "None")
+
+                    if is_recalled:
+                        reason_msg = f"Flagged on CDSCO NSQ list (Matched by {matched_by}: '{clean_batch if batch_matched else clean_drug}')."
+                    else:
+                        reason_msg = f"No recall match found for Batch '{clean_batch}' or Product '{clean_drug}'."
+
                     return {
                         "success": True,
                         "is_recalled": is_recalled,
+                        "matched_by": matched_by,
                         "extracted_data": {
                             "is_recalled": is_recalled,
-                            "recall_reason": text[:300] if is_recalled else f"No recall match for '{batch_number}'.",
-                            "alert_title": "CDSCO NSQ Fetch Fallback",
+                            "matched_by": matched_by,
+                            "recall_reason": reason_msg,
+                            "alert_title": "CDSCO NSQ Alert Table",
                         },
                         "raw": res_json,
                     }
@@ -213,13 +230,38 @@ async def audit_cdsco_recalled_batch_fetch_fallback(
 async def audit_cdsco_recalled_batch_agent(
     batch_number: str, drug_name: str, api_key: str
 ) -> Dict[str, Any]:
-    """Track 2: TinyFish Agent navigates CDSCO NSQ table to audit drug/batch recalls."""
-    search_query = f"batch '{batch_number}'" if not drug_name.strip() else f"drug '{drug_name}' or batch '{batch_number}'"
+    """
+    Track 2: TinyFish Agent interacts with the CDSCO DataTable 'Search:' input.
+    Priority 1: Search by 'Batch No'.
+    Priority 2: If Batch No is absent or returns no matching rows, search by 'Name of Product'.
+    """
+    clean_batch = (batch_number or "").strip()
+    clean_drug = (drug_name or "").strip()
+
+    if clean_batch and clean_drug:
+        search_instructions = (
+            f"1. Locate the 'Search:' input box above the top-right of the CDSCO NSQ DataTable. "
+            f"2. PRIORITY 1 (Batch No): Type '{clean_batch}' into the 'Search:' input box and check the 'Batch No' column. "
+            f"3. PRIORITY 2 (Name of Product Fallback): ONLY if '{clean_batch}' yields 'No matching records found', "
+            f"clear the 'Search:' input box, type '{clean_drug}', and check the 'Name of Product' column. "
+        )
+    elif clean_batch:
+        search_instructions = (
+            f"1. Locate the 'Search:' input box above the top-right of the CDSCO NSQ DataTable. "
+            f"2. Type '{clean_batch}' into the 'Search:' input box and inspect the 'Batch No' column. "
+        )
+    else:
+        search_instructions = (
+            f"1. Locate the 'Search:' input box above the top-right of the CDSCO NSQ DataTable. "
+            f"2. Since Batch No is not provided, type '{clean_drug}' into the 'Search:' input box and inspect the 'Name of Product' column. "
+        )
+
     goal_prompt = (
-        f"Inspect the CDSCO Not of Standard Quality (NSQ) drug alert notices table on the page. "
-        f"Check if there is any recall entry or alert mentioning {search_query}. "
-        f"Extract a JSON object with fields: "
-        f"{{ is_recalled: boolean, recall_reason: string, alert_title: string }}"
+        f"{search_instructions}"
+        f"If a matching row exists in the table, read the 'Name of Product', 'Batch No', 'Manufactured By', and 'NSQ Result' columns. "
+        f"Return a JSON object with exact fields: "
+        f"{{ is_recalled: boolean, matched_by: 'batch' | 'product_name' | 'none', "
+        f"product_name: string, batch_no: string, recall_reason: string, alert_title: string }}"
     )
 
     payload = {"url": CDSCO_NSQ_URL, "goal": goal_prompt}
@@ -230,17 +272,17 @@ async def audit_cdsco_recalled_batch_agent(
             response = await client.post(AGENT_ENDPOINT, headers=headers, json=payload)
             if response.status_code == 200:
                 res_data = response.json()
-                extracted = res_data.get("result", {})
-                is_recalled = extracted.get("is_recalled", False)
+                extracted = res_data.get("result", {}) or {}
+                is_recalled = bool(extracted.get("is_recalled", False))
                 return {
                     "success": True,
                     "is_recalled": is_recalled,
                     "extracted_data": extracted,
                     "raw": res_data,
                 }
-            return await audit_cdsco_recalled_batch_fetch_fallback(batch_number, drug_name, api_key)
+            return await audit_cdsco_recalled_batch_fetch_fallback(clean_batch, clean_drug, api_key)
         except Exception:
-            return await audit_cdsco_recalled_batch_fetch_fallback(batch_number, drug_name, api_key)
+            return await audit_cdsco_recalled_batch_fetch_fallback(clean_batch, clean_drug, api_key)
 
 
 async def trace_qr_sandbox_fetch(scanned_url: str, api_key: str) -> Dict[str, Any]:
@@ -332,16 +374,26 @@ async def execute_live_tinyfish_workflow(claims: ExtractedProductClaims) -> Dict
         if agent_res.get("success"):
             if agent_res.get("is_recalled"):
                 verdict = "SUSPICIOUS"
-                extracted = agent_res.get("extracted_data", {})
-                reason = f"Batch '{serial_or_batch}' listed on CDSCO 'Not of Standard Quality' recall tables. Reason: {extracted.get('recall_reason', 'NSQ Alert Flagged')}."
+                extracted = agent_res.get("extracted_data", {}) or {}
+                matched_by = extracted.get("matched_by", "batch_or_name")
+                nsq_reason = extracted.get("recall_reason", "Failed IP Pharmacopoeia standard in CDSCO NSQ Alert.")
+                found_batch = extracted.get("batch_no") or serial_or_batch or "Listed Batch"
+                found_product = extracted.get("product_name") or model_or_drug_name or "Listed Drug"
+
+                reason = (
+                    f"CDSCO NSQ Recall Match ({matched_by}): Product '{found_product}' "
+                    f"(Batch: {found_batch}) failed regulatory quality testing. NSQ Result: {nsq_reason}"
+                )
                 evidence_report["mismatch_details"] = {
-                    "claimed_batch": serial_or_batch,
+                    "claimed_batch": serial_or_batch or "Not Provided (Searched by Product Name)",
+                    "claimed_product": model_or_drug_name,
                     "alert_authority": "CDSCO India (NSQ Noticeboard)",
-                    "recall_reason": extracted.get("recall_reason", "NSQ Alert"),
+                    "recall_reason": nsq_reason,
                 }
             else:
                 verdict = "VERIFIED MATCH"
-                reason = f"Batch '{serial_or_batch}' audited against CDSCO NSQ portal. No active recall alerts found."
+                target_desc = f"Batch '{serial_or_batch}'" if serial_or_batch else f"Product '{model_or_drug_name}'"
+                reason = f"{target_desc} audited against CDSCO NSQ portal (Batch & Product Name). No active recall alerts found."
         else:
             verdict = "UNABLE TO VERIFY"
             reason = f"CDSCO Audit Lookup failed: {agent_res.get('error')}"
