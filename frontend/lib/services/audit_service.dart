@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -31,6 +32,7 @@ class AuditService {
     String? fallbackPreset,
   }) async {
     final uri = Uri.parse('$baseUrl/api/v1/extract');
+    debugPrint('[Inquestor API] -> POST $uri (category: $category, mockFallback: $mockFallback)');
 
     final request = http.MultipartRequest('POST', uri);
     request.fields['category'] = category;
@@ -72,10 +74,11 @@ class AuditService {
 
     try {
       final streamedResponse = await _client.send(request).timeout(
-        const Duration(seconds: 25),
+        Duration(seconds: mockFallback ? 4 : 30),
       );
 
       final respBody = await streamedResponse.stream.bytesToString();
+      debugPrint('[Inquestor API] <- Extract response status: ${streamedResponse.statusCode}');
 
       if (streamedResponse.statusCode == 200) {
         final dynamic decoded = jsonDecode(respBody);
@@ -86,6 +89,7 @@ class AuditService {
 
       // If backend returned non-200 and mockFallback is allowed
       if (mockFallback) {
+        debugPrint('[Inquestor API] Backend extraction non-200, serving mock claims.');
         return _getMockClaimsForCategory(category, fallbackPreset);
       }
 
@@ -99,12 +103,14 @@ class AuditService {
       throw ApiException(errorMessage, statusCode: streamedResponse.statusCode);
     } on TimeoutException {
       if (mockFallback) {
+        debugPrint('[Inquestor API] Backend extraction timed out, serving mock claims.');
         return _getMockClaimsForCategory(category, fallbackPreset);
       }
       throw ApiException('Extraction timed out while contacting $baseUrl/api/v1/extract.');
     } catch (e) {
       if (e is ApiException) rethrow;
       if (mockFallback) {
+        debugPrint('[Inquestor API] Backend extraction unreachable, serving mock claims.');
         return _getMockClaimsForCategory(category, fallbackPreset);
       }
       throw ApiException('Unable to connect to backend at $baseUrl for extraction.', details: e);
@@ -115,6 +121,12 @@ class AuditService {
   /// Executes Tier-2 rules engine and Tier-3 TinyFish web investigation.
   Future<VerificationResponse> verifyProduct(VerificationRequest request) async {
     final uri = Uri.parse('$baseUrl/api/v1/verify');
+    final isMockOrPreset = request.mockMode == true || request.demoPreset != null;
+    final timeoutDuration = isMockOrPreset
+        ? const Duration(seconds: 4)
+        : const Duration(seconds: 90);
+
+    debugPrint('[Inquestor API] -> POST $uri (mockMode: ${request.mockMode}, demoPreset: ${request.demoPreset}, timeout: ${timeoutDuration.inSeconds}s)');
 
     try {
       final response = await _client
@@ -123,7 +135,9 @@ class AuditService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(request.toJson()),
           )
-          .timeout(const Duration(seconds: 45));
+          .timeout(timeoutDuration);
+
+      debugPrint('[Inquestor API] <- Verify response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
@@ -132,8 +146,9 @@ class AuditService {
         }
       }
 
-      // If backend returned non-200 and mock mode is requested
-      if (request.mockMode == true) {
+      // If backend returned non-200 and mock mode / preset is requested
+      if (isMockOrPreset) {
+        debugPrint('[Inquestor API] Backend returned non-200 (${response.statusCode}), serving mock response.');
         return _getMockVerificationResponse(request);
       }
 
@@ -146,16 +161,26 @@ class AuditService {
       } catch (_) {}
       throw ApiException(errorMessage, statusCode: response.statusCode);
     } on TimeoutException {
-      if (request.mockMode == true) {
+      if (isMockOrPreset) {
+        debugPrint('[Inquestor API] Backend verification timed out, serving mock response.');
         return _getMockVerificationResponse(request);
       }
-      throw ApiException('Portal verification timed out after 45s. Toggle demo preset or retry.', statusCode: 408);
+      throw ApiException(
+        'Live portal verification timed out after ${timeoutDuration.inSeconds}s. '
+        'External registries may be slow or blocked by CAPTCHA. Toggle MOCK MODE to inspect immediately.',
+        statusCode: 408,
+      );
     } catch (e) {
       if (e is ApiException) rethrow;
-      if (request.mockMode == true) {
+      if (isMockOrPreset) {
+        debugPrint('[Inquestor API] Backend unreachable ($e), serving mock verification response.');
         return _getMockVerificationResponse(request);
       }
-      throw ApiException('Unable to reach backend at $baseUrl/api/v1/verify.', details: e);
+      throw ApiException(
+        'Unable to reach backend at $baseUrl/api/v1/verify. '
+        'Verify FastAPI is running (python -m uvicorn main:app --reload --port 8000) or toggle MOCK MODE.',
+        details: e,
+      );
     }
   }
 

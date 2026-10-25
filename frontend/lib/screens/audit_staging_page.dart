@@ -164,6 +164,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
       _activeDemoPresetId = preset.id;
       _backendDemoPreset = preset.backendPresetId;
       _selectedCategory = preset.category;
+      _mockMode = true; // Auto-activate mock mode for instant reliable demo testing
 
       // Populate mock image slots so user can extract or view immediately
       _pkgImageBytes = _mockImageBytes;
@@ -442,12 +443,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
 
       setState(() {
         _isInquestRunning = false;
-        final String errStr = e.toString();
-        if (e is TimeoutException || errStr.contains('45s') || errStr.contains('timed out')) {
-          _inquestErrorMessage = 'Portal verification timed out after 45s. Toggle demo preset or retry.';
-        } else {
-          _inquestErrorMessage = errStr;
-        }
+        _inquestErrorMessage = e.toString();
       });
     } finally {
       rotatingTimer?.cancel();
@@ -483,10 +479,9 @@ class AuditStagingPageState extends State<AuditStagingPage>
                 ),
                 Row(
                   children: [
-                    // Mock Mode Toggle
-                    IconButton(
-                      tooltip: _mockMode ? 'Mock Mode: Active (Demo)' : 'Live API Mode: Active',
-                      onPressed: () {
+                    // Mock / Live Mode Toggle Pill
+                    InkWell(
+                      onTap: () {
                         setState(() {
                           _mockMode = !_mockMode;
                         });
@@ -494,17 +489,48 @@ class AuditStagingPageState extends State<AuditStagingPage>
                           SnackBar(
                             content: Text(
                               _mockMode
-                                  ? 'Demo Mock Mode ENABLED (TinyFish fixtures)'
-                                  : 'Live Network Mode ENABLED',
+                                  ? 'Demo Mock Mode ENABLED (Instant fixtures)'
+                                  : 'Live Network Mode ENABLED (Connecting to ${_auditService.baseUrl})',
                             ),
                             duration: const Duration(seconds: 2),
                           ),
                         );
                       },
-                      icon: Icon(
-                        Icons.settings_outlined,
-                        size: 19,
-                        color: _mockMode ? InquestorColors.antiqueGold : InquestorColors.softSlate,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: _mockMode
+                              ? InquestorColors.antiqueGold.withValues(alpha: 0.12)
+                              : InquestorColors.pureWhite,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _mockMode
+                                ? InquestorColors.antiqueGold
+                                : InquestorColors.hairlineBorder,
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _mockMode ? Icons.bolt : Icons.wifi,
+                              size: 13,
+                              color: _mockMode ? InquestorColors.antiqueGold : InquestorColors.softSlate,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              _mockMode ? 'MOCK ON' : 'LIVE API',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: _mockMode ? InquestorColors.antiqueGold : InquestorColors.graphite,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -740,14 +766,37 @@ class AuditStagingPageState extends State<AuditStagingPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              '1-TAP JUDGE DEMO PRESETS',
-              style: TextStyle(
-                color: InquestorColors.softSlate,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
-              ),
+            Row(
+              children: [
+                const Text(
+                  '1-TAP JUDGE DEMO PRESETS',
+                  style: TextStyle(
+                    color: InquestorColors.softSlate,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _mockMode
+                        ? InquestorColors.antiqueGold.withValues(alpha: 0.12)
+                        : InquestorColors.softSlate.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    _mockMode ? '⚡ MOCK ACTIVE' : '🌐 LIVE MODE',
+                    style: TextStyle(
+                      color: _mockMode ? InquestorColors.antiqueGold : InquestorColors.softSlate,
+                      fontSize: 9.0,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
             if (_activeDemoPresetId != null)
               InkWell(
@@ -1731,31 +1780,66 @@ class AuditStagingPageState extends State<AuditStagingPage>
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: InquestorColors.coralRed, width: 1.0),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, size: 16, color: InquestorColors.coralRed),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'COMMUNICATION ERROR',
-                  style: TextStyle(
-                    color: InquestorColors.coralRed,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.error_outline, size: 16, color: InquestorColors.coralRed),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'COMMUNICATION ERROR',
+                      style: TextStyle(
+                        color: InquestorColors.coralRed,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      message,
+                      style: const TextStyle(color: InquestorColors.graphite, fontSize: 11.5),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  message,
-                  style: const TextStyle(color: InquestorColors.graphite, fontSize: 11.5),
+              ),
+            ],
+          ),
+          if (!_mockMode) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _mockMode = true;
+                      _inquestErrorMessage = null;
+                    });
+                    _runInquestAction();
+                  },
+                  icon: const Icon(Icons.bolt, size: 14, color: InquestorColors.antiqueGold),
+                  label: const Text(
+                    'SWITCH TO MOCK MODE & RUN',
+                    style: TextStyle(
+                      color: InquestorColors.antiqueGold,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: InquestorColors.antiqueGold),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );

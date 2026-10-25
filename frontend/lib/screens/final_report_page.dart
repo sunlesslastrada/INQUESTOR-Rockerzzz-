@@ -6,8 +6,10 @@ import '../models/audit_models.dart';
 import '../theme/inquestor_theme.dart';
 import '../widgets/inquestor_background.dart';
 
-/// Final Forensic Evidence Report Page (Page 4).
-/// Displays verdict, discrepancy breakdown, audit checklist, and raw agent evidence.
+/// Final Forensic Evidence Report Screen (Page 4).
+/// Aggregates the complete evidentiary trail across Tier 0 (Logo & Emblem),
+/// Tier 1 (Extracted Claims), Tier 2 (Deterministic Gatekeeper), and Tier 3
+/// (External Registry & TinyFish Agent Audit) into an executive forensic dashboard.
 class FinalReportPage extends StatefulWidget {
   final VerificationResponse? responseOverride;
   final ExtractedProductClaims? claimsOverride;
@@ -57,7 +59,7 @@ class _FinalReportPageState extends State<FinalReportPage> {
         ? InquestorColors.forestGreen
         : (isSuspicious ? InquestorColors.coralRed : InquestorColors.amber);
 
-    final String statusIconText = isVerified ? '✓' : (isSuspicious ? '✗' : '⚠');
+    final String statusIconText = isVerified ? '✓' : (isSuspicious ? '✗' : 'ℹ');
 
     return InquestorBackground(
       child: Scaffold(
@@ -67,359 +69,776 @@ class _FinalReportPageState extends State<FinalReportPage> {
           child: Container(
             decoration: BoxDecoration(
               color: const Color(0xFFFAF9F6).withValues(alpha: 0.85),
-            border: Border(
-              bottom: BorderSide(
-                color: InquestorColors.hairlineBorder,
-                width: 1.0,
+              border: const Border(
+                bottom: BorderSide(
+                  color: InquestorColors.hairlineBorder,
+                  width: 1.0,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InquestorBrandHeader(
+                    onTap: () => Navigator.of(context).pushReplacementNamed('/'),
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Settings / Configuration',
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Inquestor Engine v1.0.0 · All forensic models active.'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.settings_outlined,
+                          size: 16,
+                          color: InquestorColors.softSlate,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () => Navigator.of(context).pushReplacementNamed('/tier0'),
+                        icon: const Icon(
+                          Icons.refresh_outlined,
+                          size: 15,
+                          color: InquestorColors.graphite,
+                        ),
+                        label: const Text(
+                          'New Inquest',
+                          style: TextStyle(
+                            color: InquestorColors.graphite,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          alignment: Alignment.center,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                InquestorBrandHeader(
-                  onTap: () => Navigator.of(context).pushReplacementNamed('/'),
-                ),
-                TextButton.icon(
-                  onPressed: () => Navigator.of(context).pushReplacementNamed('/tier0'),
-                  icon: const Icon(
-                    Icons.refresh_outlined,
-                    size: 15,
-                    color: InquestorColors.graphite,
-                  ),
-                  label: const Text(
-                    'New Inspection',
-                    style: TextStyle(
-                      color: InquestorColors.graphite,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Breadcrumb
-                Row(
-                  children: [
-                    const Text(
-                      'TIER 0',
-                      style: TextStyle(
-                        color: InquestorColors.softSlate,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.chevron_right, size: 13, color: InquestorColors.softSlate),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'PAGE 2 (STAGING)',
-                      style: TextStyle(
-                        color: InquestorColors.softSlate,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.chevron_right, size: 13, color: InquestorColors.softSlate),
-                    const SizedBox(width: 6),
-                    Text(
-                      'FINAL EVIDENCE REPORT',
-                      style: TextStyle(
-                        color: InquestorColors.graphite.withValues(alpha: 0.9),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Breadcrumb Tracker
+                  _buildBreadcrumbTracker(),
+                  const SizedBox(height: 20),
 
-                // Verdict Banner Card
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: InquestorColors.pureWhite,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: statusColor, width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: statusColor.withValues(alpha: 0.08),
-                        blurRadius: 18,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  statusIconText,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  response.verdict,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            response.category.toUpperCase(),
-                            style: const TextStyle(
-                              color: InquestorColors.softSlate,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        claims != null && claims.brandName != null
-                            ? '${claims.brandName} · ${claims.modelOrDrugName ?? "Forensic Review"}'
-                            : 'Forensic Inquest Assessment',
-                        style: const TextStyle(
-                          color: InquestorColors.graphite,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        response.summaryBanner,
-                        style: const TextStyle(
-                          color: InquestorColors.softSlate,
-                          fontSize: 13,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                // Forensic Discrepancy Card (if present)
-                if (response.forensicDiscrepancy != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: InquestorColors.pureWhite,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: InquestorColors.coralRed.withValues(alpha: 0.4),
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.warning_amber_rounded, size: 16, color: InquestorColors.coralRed),
-                            SizedBox(width: 8),
-                            Text(
-                              'FORENSIC DISCREPANCY RECORDED',
-                              style: TextStyle(
-                                color: InquestorColors.coralRed,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildDiscrepancyRow(
-                          'Contradiction Field',
-                          response.forensicDiscrepancy!['field']?.toString() ?? 'Model / Serial Mismatch',
-                        ),
-                        const Divider(height: 16),
-                        _buildDiscrepancyRow(
-                          'Packaging Claim',
-                          response.forensicDiscrepancy!['packaging_claim']?.toString() ?? 'Unknown Claim',
-                        ),
-                        const Divider(height: 16),
-                        _buildDiscrepancyRow(
-                          'Authoritative Record',
-                          response.forensicDiscrepancy!['official_record']?.toString() ?? 'Mismatch',
-                          highlight: true,
-                        ),
-                      ],
-                    ),
-                  ),
+                  // A. Hero Verdict Card (Top Anchor)
+                  _buildHeroVerdictCard(response, claims, statusColor, statusIconText),
                   const SizedBox(height: 18),
+
+                  // B. Forensic Summary Callout Banner
+                  _buildSummaryCallout(response.summaryBanner, statusColor),
+                  const SizedBox(height: 18),
+
+                  // C. Forensic Discrepancy Split-Card (Conditional)
+                  if (response.forensicDiscrepancy != null) ...[
+                    _buildDiscrepancySplitCard(response.forensicDiscrepancy!),
+                    const SizedBox(height: 18),
+                  ],
+
+                  // D. Product Claims & Metadata Summary Card
+                  _buildProductMetadataCard(claims, response.category),
+                  const SizedBox(height: 18),
+
+                  // E. Itemized Multi-Tier Audit Checklist
+                  _buildChecklistCard(response.checklist),
+                  const SizedBox(height: 18),
+
+                  // F. Technical Evidence Drawer & Stylized Dossier
+                  _buildTinyFishEvidenceCard(response, claims, statusColor),
+                  const SizedBox(height: 28),
+
+                  // G. Bottom Action Controls
+                  _buildBottomActionButtons(response, claims),
+                  const SizedBox(height: 36),
                 ],
-
-                // Master Audit Checklist Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: InquestorColors.pureWhite,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: InquestorColors.hairlineBorder,
-                      width: 1.0,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'MULTI-TIER AUDIT TRAIL',
-                        style: TextStyle(
-                          color: InquestorColors.graphiteSubtle,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      if (response.checklist.isEmpty)
-                        const Text(
-                          'No audit items reported.',
-                          style: TextStyle(color: InquestorColors.softSlate, fontSize: 12),
-                        )
-                      else
-                        ...response.checklist.map((item) => _buildChecklistRow(item)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                // Stylized TinyFish Authoritative Evidence Dossier
-                _buildTinyFishEvidenceCard(response, claims, statusColor),
-                const SizedBox(height: 24),
-
-                // Bottom Action Buttons
-                ElevatedButton(
-                  onPressed: () {
-                    final reportText = StringBuffer()
-                      ..writeln('INQUESTOR FORENSIC EVIDENCE REPORT')
-                      ..writeln('Verdict: ${response.verdict}')
-                      ..writeln('Category: ${response.category}')
-                      ..writeln('Summary: ${response.summaryBanner}')
-                      ..writeln('\nAudit Trail:');
-                    for (final item in response.checklist) {
-                      reportText.writeln(
-                          '[${item.passed ? "PASS" : "FAIL"}] (${item.tier}) ${item.name}: ${item.details}');
-                    }
-                    Clipboard.setData(ClipboardData(text: reportText.toString()));
-                    setState(() {
-                      _copiedToClipboard = true;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Forensic Report copied to clipboard.'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: InquestorColors.graphite,
-                    foregroundColor: InquestorColors.pureWhite,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    _copiedToClipboard ? '✓ REPORT COPIED TO CLIPBOARD' : 'COPY FORENSIC REPORT TO CLIPBOARD',
-                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton(
-                  onPressed: () => Navigator.of(context).pushReplacementNamed('/tier0'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: InquestorColors.graphite,
-                    side: const BorderSide(color: InquestorColors.hairlineBorder, width: 1.0),
-                    backgroundColor: InquestorColors.pureWhite,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                  ),
-                  child: const Text(
-                    'START NEW PRODUCT INTAKE',
-                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
 
-  Widget _buildDiscrepancyRow(String label, String value, {bool highlight = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // ==========================================================================
+  // A. BREADCRUMB & HERO VERDICT COMPONENTS
+  // ==========================================================================
+
+  Widget _buildBreadcrumbTracker() {
+    return const Row(
       children: [
         Text(
-          label.toUpperCase(),
-          style: const TextStyle(
+          'TIER 0',
+          style: TextStyle(
             color: InquestorColors.softSlate,
             fontSize: 10,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.6,
+            letterSpacing: 1.0,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(width: 6),
+        Icon(Icons.chevron_right, size: 12, color: InquestorColors.softSlate),
+        SizedBox(width: 6),
         Text(
-          value,
+          'STAGE 2',
           style: TextStyle(
-            color: highlight ? InquestorColors.coralRed : InquestorColors.graphite,
-            fontSize: 12.5,
-            fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
+            color: InquestorColors.softSlate,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.0,
+          ),
+        ),
+        SizedBox(width: 6),
+        Icon(Icons.chevron_right, size: 12, color: InquestorColors.softSlate),
+        SizedBox(width: 6),
+        Text(
+          'FINAL FORENSIC REPORT',
+          style: TextStyle(
+            color: InquestorColors.graphite,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.0,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHeroVerdictCard(
+    VerificationResponse response,
+    ExtractedProductClaims? claims,
+    Color statusColor,
+    String statusIconText,
+  ) {
+    final bool isMedicine = response.category == InquestCategory.medicine;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: InquestorColors.pureWhite,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: statusColor, width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: statusColor.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Verdict Pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      statusIconText,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      response.verdict,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Category Badge & Audit Stamp
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: InquestorColors.porcelain,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: InquestorColors.hairlineBorder),
+                    ),
+                    child: Text(
+                      isMedicine ? '💊 MEDICINE' : '🎧 ELECTRONICS',
+                      style: const TextStyle(
+                        color: InquestorColors.graphite,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Product Headline
+          Text(
+            claims != null && claims.brandName != null
+                ? '${claims.brandName} · ${claims.modelOrDrugName ?? "Forensic Review"}'
+                : 'Executive Forensic Evidence Report',
+            style: const TextStyle(
+              color: InquestorColors.graphite,
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Row(
+            children: [
+              Icon(Icons.shield_outlined, size: 12, color: InquestorColors.antiqueGold),
+              SizedBox(width: 5),
+              Text(
+                'MULTI-TIER EVIDENCE ENGINE · AUDIT VERIFIED',
+                style: TextStyle(
+                  color: InquestorColors.softSlate,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================================
+  // B. FORENSIC SUMMARY CALLOUT BANNER
+  // ==========================================================================
+
+  Widget _buildSummaryCallout(String summaryBanner, Color statusColor) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: statusColor.withValues(alpha: 0.25), width: 1.0),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 16, color: statusColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'EXECUTIVE FORENSIC SUMMARY',
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  summaryBanner,
+                  style: const TextStyle(
+                    color: InquestorColors.graphite,
+                    fontSize: 12.5,
+                    height: 1.45,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================================
+  // C. FORENSIC DISCREPANCY SPLIT-CARD
+  // ==========================================================================
+
+  Widget _buildDiscrepancySplitCard(Map<String, dynamic> discrepancy) {
+    final String field = discrepancy['field']?.toString() ?? 'Forensic Contradiction';
+    final String packagingClaim =
+        discrepancy['packaging_claim']?.toString() ?? 'Claim on physical packaging';
+    final String officialRecord =
+        discrepancy['official_record']?.toString() ?? 'Authoritative registry record';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: InquestorColors.pureWhite,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: InquestorColors.coralRed.withValues(alpha: 0.45),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: InquestorColors.coralRed.withValues(alpha: 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 16, color: InquestorColors.coralRed),
+                  SizedBox(width: 8),
+                  Text(
+                    'FORENSIC DISCREPANCY RECORDED',
+                    style: TextStyle(
+                      color: InquestorColors.coralRed,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: InquestorColors.coralRed.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'CRITICAL MISMATCH',
+                  style: TextStyle(
+                    color: InquestorColors.coralRed,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Field Under Dispute
+          Row(
+            children: [
+              const Text(
+                'DISPUTED ATTRIBUTE: ',
+                style: TextStyle(
+                  color: InquestorColors.softSlate,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              Text(
+                field.toUpperCase(),
+                style: const TextStyle(
+                  color: InquestorColors.graphite,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Side-by-side comparison split-cards
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left: Box / Packaging Claim (Tier 1)
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9F8),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE5E5E2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.inventory_2_outlined, size: 12, color: InquestorColors.softSlate),
+                          SizedBox(width: 5),
+                          Text(
+                            'BOX CLAIM (TIER 1)',
+                            style: TextStyle(
+                              color: InquestorColors.softSlate,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        packagingClaim,
+                        style: const TextStyle(
+                          color: InquestorColors.graphite,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: InquestorColors.softSlate,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // Right: Official Registry Record (Tier 3)
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: InquestorColors.coralRed.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: InquestorColors.coralRed.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.verified_outlined, size: 12, color: InquestorColors.coralRed),
+                          SizedBox(width: 5),
+                          Text(
+                            'REGISTRY RECORD (TIER 3)',
+                            style: TextStyle(
+                              color: InquestorColors.coralRed,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        officialRecord,
+                        style: const TextStyle(
+                          color: InquestorColors.coralRed,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Forensic Verdict: The physical packaging claim directly contradicts official database records. Strong indicator of serial number cloning, packaging counterfeiting, or regulatory withdrawal.',
+            style: TextStyle(
+              color: InquestorColors.softSlate,
+              fontSize: 10.5,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================================
+  // D. PRODUCT CLAIMS & METADATA SUMMARY CARD
+  // ==========================================================================
+
+  Widget _buildProductMetadataCard(ExtractedProductClaims? claims, String category) {
+    if (claims == null) return const SizedBox.shrink();
+
+    final bool isMedicine = category == InquestCategory.medicine;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: InquestorColors.pureWhite,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: InquestorColors.hairlineBorder, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: InquestorColors.graphite.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 15, color: InquestorColors.graphite),
+                  SizedBox(width: 8),
+                  Text(
+                    'VERIFIED PRODUCT ATTRIBUTES',
+                    style: TextStyle(
+                      color: InquestorColors.graphiteSubtle,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: InquestorColors.porcelain,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: InquestorColors.hairlineBorder),
+                ),
+                child: Text(
+                  isMedicine ? '💊 MEDICINE' : '🎧 ELECTRONICS',
+                  style: const TextStyle(
+                    color: InquestorColors.graphite,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetaTile(
+                  'Brand Manufacturer',
+                  claims.brandName ?? 'Not Detected',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetaTile(
+                  isMedicine ? 'Drug / Formulation' : 'Product Model',
+                  claims.modelOrDrugName ?? 'Not Detected',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetaTile(
+                  'Barcode / GTIN',
+                  claims.barcodeGtin ?? 'No GTIN Scanned',
+                  isMono: true,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMetaTile(
+                  isMedicine ? 'Batch / Lot Number' : 'Serial Number',
+                  claims.serialOrBatchNumber ?? 'No Serial Recorded',
+                  isMono: true,
+                ),
+              ),
+            ],
+          ),
+          if (claims.expiryDate != null || claims.mfgDate != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (claims.mfgDate != null)
+                  Expanded(
+                    child: _buildMetaTile(
+                      'Manufacturing Date',
+                      claims.mfgDate!,
+                      isMono: true,
+                    ),
+                  ),
+                if (claims.mfgDate != null && claims.expiryDate != null)
+                  const SizedBox(width: 10),
+                if (claims.expiryDate != null)
+                  Expanded(
+                    child: _buildMetaTile(
+                      'Expiration Date',
+                      claims.expiryDate!,
+                      isMono: true,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+          if (claims.qrRedirectUrl != null && claims.qrRedirectUrl!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _buildMetaTile(
+              'Scanned QR Redirect URL',
+              claims.qrRedirectUrl!,
+              isMono: true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetaTile(String label, String value, {bool isMono = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAF9),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0xFFEFEFEA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: InquestorColors.softSlate,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: TextStyle(
+              color: InquestorColors.graphite,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              fontFamily: isMono ? 'monospace' : null,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================================
+  // E. ITEMIZED MULTI-TIER AUDIT CHECKLIST
+  // ==========================================================================
+
+  Widget _buildChecklistCard(List<AuditCheckItem> checklist) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: InquestorColors.pureWhite,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: InquestorColors.hairlineBorder,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: InquestorColors.graphite.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.checklist_rtl_outlined, size: 15, color: InquestorColors.graphite),
+                  SizedBox(width: 8),
+                  Text(
+                    'MULTI-TIER FORENSIC AUDIT TRAIL',
+                    style: TextStyle(
+                      color: InquestorColors.graphiteSubtle,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: InquestorColors.porcelain,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: InquestorColors.hairlineBorder),
+                ),
+                child: Text(
+                  '${checklist.where((c) => c.passed).length}/${checklist.length} PASSED',
+                  style: const TextStyle(
+                    color: InquestorColors.graphite,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (checklist.isEmpty)
+            const Text(
+              'No audit items recorded.',
+              style: TextStyle(color: InquestorColors.softSlate, fontSize: 12),
+            )
+          else
+            ...checklist.map((item) => _buildChecklistRow(item)),
+        ],
+      ),
     );
   }
 
@@ -449,31 +868,58 @@ class _FinalReportPageState extends State<FinalReportPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: InquestorColors.porcelain,
-                        borderRadius: BorderRadius.circular(3),
-                        border: Border.all(color: InquestorColors.hairlineBorder),
-                      ),
-                      child: Text(
-                        item.tier,
-                        style: const TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w600,
-                          color: InquestorColors.softSlate,
-                        ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: InquestorColors.porcelain,
+                              borderRadius: BorderRadius.circular(3),
+                              border: Border.all(color: InquestorColors.hairlineBorder),
+                            ),
+                            child: Text(
+                              item.tier,
+                              style: const TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: InquestorColors.softSlate,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              item.name,
+                              style: const TextStyle(
+                                color: InquestorColors.graphite,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (item.passed ? InquestorColors.forestGreen : InquestorColors.coralRed)
+                            .withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                       child: Text(
-                        item.name,
-                        style: const TextStyle(
-                          color: InquestorColors.graphite,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                        item.passed ? 'PASSED' : 'FAILED',
+                        style: TextStyle(
+                          color: item.passed ? InquestorColors.forestGreen : InquestorColors.coralRed,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -497,7 +943,7 @@ class _FinalReportPageState extends State<FinalReportPage> {
   }
 
   // ==========================================================================
-  // STYLIZED TINYFISH EVIDENCE DOSSIER COMPONENTS
+  // F. TECHNICAL EVIDENCE DRAWER & STYLIZED DOSSIER (TINYFISH PAYLOAD)
   // ==========================================================================
 
   Map<String, dynamic> _extractEvidenceData(Map<String, dynamic> raw, String category) {
@@ -550,7 +996,8 @@ class _FinalReportPageState extends State<FinalReportPage> {
     final String? alertTitle = cdscoExtracted?['alert_title']?.toString() ??
         raw['recall_notice']?.toString();
 
-    final String fallbackId = 'TF-' + DateTime.now().millisecondsSinceEpoch.toRadixString(16).toUpperCase();
+    final String fallbackId =
+        'TF-' + DateTime.now().millisecondsSinceEpoch.toRadixString(16).toUpperCase();
     final String? runId = oemRaw?['run_id']?.toString() ??
         cdscoRaw?['run_id']?.toString() ??
         (raw['preset'] != null ? 'SIM-' + raw['preset'].toString().toUpperCase() : fallbackId);
@@ -610,8 +1057,8 @@ class _FinalReportPageState extends State<FinalReportPage> {
     final String statusBadgeText = isFastFail
         ? 'LOCAL FAST-FAIL'
         : (isVerified
-            ? 'âœ“ REGISTRY MATCH'
-            : (isSuspicious ? 'âœ— CONTRADICTION FLAGGED' : 'âš  UNRESOLVED'));
+            ? '✓ REGISTRY MATCH'
+            : (isSuspicious ? '✗ CONTRADICTION FLAGGED' : '⚠ UNRESOLVED'));
 
     final Color badgeColor = isVerified
         ? InquestorColors.forestGreen
@@ -1391,7 +1838,8 @@ class _FinalReportPageState extends State<FinalReportPage> {
     );
   }
 
-  Widget _buildEvidenceDetailRow(String label, String value, {bool isMono = false, Color? valueColor}) {
+  Widget _buildEvidenceDetailRow(String label, String value,
+      {bool isMono = false, Color? valueColor}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1416,6 +1864,105 @@ class _FinalReportPageState extends State<FinalReportPage> {
               fontWeight: FontWeight.w600,
               fontFamily: isMono ? 'monospace' : null,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==========================================================================
+  // G. BOTTOM ACTION BUTTONS
+  // ==========================================================================
+
+  Widget _buildBottomActionButtons(
+    VerificationResponse response,
+    ExtractedProductClaims? claims,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Primary Button: START NEW INQUEST
+        ElevatedButton.icon(
+          onPressed: () => Navigator.of(context).pushReplacementNamed('/tier0'),
+          icon: const Icon(Icons.refresh_rounded, size: 16),
+          label: const Text(
+            'START NEW INQUEST',
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: InquestorColors.graphite,
+            foregroundColor: InquestorColors.pureWhite,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            elevation: 0,
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Secondary Button: EXPORT AUDIT SUMMARY
+        OutlinedButton.icon(
+          onPressed: () {
+            final reportText = StringBuffer()
+              ..writeln('========================================')
+              ..writeln('INQUESTOR FORENSIC EVIDENCE REPORT')
+              ..writeln('========================================')
+              ..writeln('Verdict:   ${response.verdict}')
+              ..writeln('Category:  ${response.category.toUpperCase()}')
+              ..writeln('Product:   ${claims?.brandName ?? "Unknown"} - ${claims?.modelOrDrugName ?? "Unknown"}')
+              ..writeln('Identifier: GTIN ${claims?.barcodeGtin ?? "N/A"} | Serial/Batch ${claims?.serialOrBatchNumber ?? "N/A"}')
+              ..writeln('Summary:   ${response.summaryBanner}')
+              ..writeln('\n----------------------------------------')
+              ..writeln('AUDIT TRAIL CHECKLIST:');
+
+            for (final item in response.checklist) {
+              reportText.writeln(
+                  '[${item.passed ? "PASS" : "FAIL"}] (${item.tier}) ${item.name}: ${item.details}');
+            }
+
+            if (response.forensicDiscrepancy != null) {
+              reportText.writeln('\n----------------------------------------');
+              reportText.writeln('FORENSIC CONTRADICTION:');
+              reportText.writeln('Field:    ${response.forensicDiscrepancy!["field"]}');
+              reportText.writeln('Box:      ${response.forensicDiscrepancy!["packaging_claim"]}');
+              reportText.writeln('Official: ${response.forensicDiscrepancy!["official_record"]}');
+            }
+
+            reportText.writeln('\nGenerated by Inquestor Engine v1.0.0');
+
+            Clipboard.setData(ClipboardData(text: reportText.toString()));
+            setState(() {
+              _copiedToClipboard = true;
+            });
+            Future.delayed(const Duration(seconds: 3), () {
+              if (mounted) {
+                setState(() => _copiedToClipboard = false);
+              }
+            });
+          },
+          icon: Icon(
+            _copiedToClipboard ? Icons.check_circle_outline : Icons.content_copy_outlined,
+            size: 15,
+            color: _copiedToClipboard ? InquestorColors.forestGreen : InquestorColors.graphite,
+          ),
+          label: Text(
+            _copiedToClipboard ? '✓ AUDIT SUMMARY COPIED TO CLIPBOARD' : 'EXPORT AUDIT SUMMARY',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: _copiedToClipboard ? InquestorColors.forestGreen : InquestorColors.graphite,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: InquestorColors.graphite,
+            side: BorderSide(
+              color: _copiedToClipboard
+                  ? InquestorColors.forestGreen.withValues(alpha: 0.5)
+                  : InquestorColors.hairlineBorder,
+              width: 1.0,
+            ),
+            backgroundColor: InquestorColors.pureWhite,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
       ],

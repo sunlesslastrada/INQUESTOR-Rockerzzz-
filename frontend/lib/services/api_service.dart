@@ -19,7 +19,11 @@ class ApiConfig {
     if (configuredUrl.isNotEmpty) {
       return configuredUrl;
     }
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    if (kIsWeb) {
+      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
+      return 'http://' + host + ':8000';
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:8000';
     }
     return 'http://127.0.0.1:8000';
