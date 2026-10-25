@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +6,7 @@ import '../landing_page.dart';
 import '../models/tier0_models.dart';
 import '../services/tier0_service.dart';
 import '../widgets/camera/camera_capture.dart';
+import '../widgets/inquestor_background.dart';
 
 /// Tier 0 Intake & Visual Anomaly Inspection Page.
 /// Connects to the live FastAPI backend via multipart HTTP uploads,
@@ -267,8 +268,9 @@ class Tier0InspectionPageState extends State<Tier0InspectionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: InquestorColors.porcelain,
-      body: SafeArea(
+      backgroundColor: Colors.transparent,
+      body: InquestorBackground(
+        child: SafeArea(
         child: Column(
           children: [
             // Top Navigation Bar
@@ -322,7 +324,8 @@ class Tier0InspectionPageState extends State<Tier0InspectionPage> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   // --------------------------------------------------------------------------
@@ -332,8 +335,8 @@ class Tier0InspectionPageState extends State<Tier0InspectionPage> {
   Widget _buildTopAppBar(BuildContext context) {
     return Container(
       height: 60,
-      decoration: const BoxDecoration(
-        color: InquestorColors.porcelain,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF9F6).withValues(alpha: 0.85),
         border: Border(
           bottom: BorderSide(
             color: InquestorColors.hairlineBorder,
@@ -506,7 +509,7 @@ class Tier0InspectionPageState extends State<Tier0InspectionPage> {
               onTap: () => _loadPreset(Tier0Response.presetAuthentic),
             ),
             _buildPresetChip(
-              label: '✗ "Abibas" (Spoofed Logo)',
+              label: '✗ "Phizer" / Spoofed Pharma Logo',
               color: InquestorColors.coralRed,
               onTap: () => _loadPreset(Tier0Response.presetCounterfeit),
             ),

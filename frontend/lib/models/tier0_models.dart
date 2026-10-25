@@ -57,19 +57,18 @@ class Tier0Response {
     canProceed: true,
   );
 
-  /// Preset 2: Counterfeit "Abibas" Spoof
+  /// Preset 2: Counterfeit Medicine "Phizer" Spoof
   static const Tier0Response presetCounterfeit = Tier0Response(
     isLogoValid: false,
-    detectedBrand: 'Abibas (Spoof of Adidas)',
-    detectedCategory: 'electronics_accessories',
+    detectedBrand: 'Phizer',
+    detectedCategory: 'medicine',
     confidence: 0.94,
     anomaliesDetected: [
-      "Trademark typography misspelling ('Abibas' instead of 'Adidas')",
-      'Trefoil leaf kerning distortion: 14% angular offset on middle petal',
-      'Uneven stroke width variance exceeding OEM tolerance by 1.8mm',
+      "Brand spelling violation: 'Phizer' instead of 'Pfizer'",
+      'Font typography kerning mismatch on pharmaceutical trademark',
     ],
     reasoning:
-        'Emblem displays phonetic spoofing and kerning anomalies. The stroke vectors and character baseline deviate severely from authentic brand vector geometry.',
+        'Packaging typography and trademark geometry do not match registered pharmaceutical manufacturer specifications.',
     canProceed: true,
   );
 

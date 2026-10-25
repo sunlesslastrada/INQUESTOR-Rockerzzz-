@@ -7,6 +7,7 @@ Future<Uint8List?> openCameraCaptureImpl(BuildContext context) async {
   final picker = ImagePicker();
   final XFile? file = await picker.pickImage(
     source: ImageSource.camera,
+    preferredCameraDevice: CameraDevice.rear,
     maxWidth: 1600,
     maxHeight: 1600,
     imageQuality: 90,

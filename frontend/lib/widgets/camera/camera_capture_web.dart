@@ -333,9 +333,28 @@ class _WebCameraCaptureDialogState extends State<_WebCameraCaptureDialog> {
                   ),
 
                   // Center Shutter Button
-                  _ShutterButton(
-                    isEnabled: !_isInitializing && _errorMessage == null,
-                    onPressed: _capturePhoto,
+                  ElevatedButton.icon(
+                    onPressed: (!_isInitializing && _errorMessage == null)
+                        ? _capturePhoto
+                        : null,
+                    icon: const Icon(Icons.camera_alt, size: 16),
+                    label: const Text(
+                      'TAKE SNAPSHOT',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: InquestorColors.graphite,
+                      foregroundColor: InquestorColors.pureWhite,
+                      disabledBackgroundColor: InquestorColors.hairlineBorder,
+                      disabledForegroundColor: InquestorColors.softSlate,
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      elevation: 0,
+                    ),
                   ),
 
                   // Balance spacing

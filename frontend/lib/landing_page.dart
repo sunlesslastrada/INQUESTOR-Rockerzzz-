@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // Export theme definitions so landing_page.dart is completely self-contained.
 export 'theme/inquestor_theme.dart';
 import 'theme/inquestor_theme.dart';
+import 'widgets/inquestor_background.dart';
 
 // ============================================================================
 // 1. BRAND ASSETS & CUSTOM PAINTER
@@ -160,8 +161,9 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: InquestorColors.porcelain,
-      body: LayoutBuilder(
+      backgroundColor: Colors.transparent,
+      body: InquestorBackground(
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final isMobile = constraints.maxWidth < 860;
           final double horizontalPadding = isMobile ? 20.0 : 40.0;
@@ -244,6 +246,7 @@ class _LandingPageState extends State<LandingPage> {
           );
         },
       ),
+      ),
     );
   }
 }
@@ -269,8 +272,8 @@ class _InquestorNavigationBar extends StatelessWidget {
     return Container(
       height: 64,
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: InquestorColors.porcelain,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF9F6).withValues(alpha: 0.85),
         border: Border(
           bottom: BorderSide(
             color: InquestorColors.hairlineBorder,
