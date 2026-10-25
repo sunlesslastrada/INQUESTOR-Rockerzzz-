@@ -8,6 +8,8 @@ import '../models/audit_models.dart';
 import '../services/api_service.dart';
 import '../services/audit_service.dart';
 import '../theme/inquestor_theme.dart';
+import '../widgets/camera/camera_capture.dart';
+import '../widgets/inquestor_background.dart';
 
 /// Page 2: Multi-Modal Intake, Human-in-the-Loop Claim Review,
 /// Tier-2 Deterministic Gatekeeper, and Tier-3 Authority Stepper.
@@ -190,6 +192,28 @@ class AuditStagingPageState extends State<AuditStagingPage>
 
   Future<void> _pickImage(int slot, ImageSource source) async {
     try {
+      if (source == ImageSource.camera) {
+        final Uint8List? bytes = await openCameraCapture(context);
+        if (bytes == null || !mounted) return;
+
+        setState(() {
+          final String stamp = DateTime.now().millisecondsSinceEpoch.toString();
+          if (slot == 1) {
+            _pkgImageBytes = bytes;
+            _pkgImageName = 'packaging_camera_' + stamp + '.jpg';
+          } else if (slot == 2) {
+            _barcodeImageBytes = bytes;
+            _barcodeImageName = 'barcode_camera_' + stamp + '.jpg';
+          } else if (slot == 3) {
+            _qrImageBytes = bytes;
+            _qrImageName = 'qr_camera_' + stamp + '.jpg';
+          }
+          _activeDemoPresetId = null;
+          _extractErrorMessage = null;
+        });
+        return;
+      }
+
       final XFile? file = await _picker.pickImage(
         source: source,
         imageQuality: 92,
@@ -199,6 +223,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
       if (file == null) return;
 
       final bytes = await file.readAsBytes();
+      if (!mounted) return;
       setState(() {
         if (slot == 1) {
           _pkgImageBytes = bytes;
@@ -214,9 +239,11 @@ class AuditStagingPageState extends State<AuditStagingPage>
         _extractErrorMessage = null;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to acquire image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to acquire image: $e')),
+        );
+      }
     }
   }
 
@@ -368,13 +395,14 @@ class AuditStagingPageState extends State<AuditStagingPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: InquestorColors.porcelain,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(64),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: InquestorColors.porcelain,
+    return InquestorBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF9F6).withValues(alpha: 0.85),
             border: Border(
               bottom: BorderSide(
                 color: InquestorColors.hairlineBorder,
@@ -491,6 +519,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -974,54 +1003,64 @@ class AuditStagingPageState extends State<AuditStagingPage>
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
           ] else ...[
-            PopupMenuButton<ImageSource>(
-              onSelected: (source) => _pickImage(slot, source),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: ImageSource.camera,
-                  child: Row(
-                    children: [
-                      Icon(Icons.photo_camera_outlined, size: 16, color: InquestorColors.graphite),
-                      SizedBox(width: 8),
-                      Text('Take Photo', style: TextStyle(fontSize: 12.5)),
-                    ],
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () => _pickImage(slot, ImageSource.camera),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: InquestorColors.graphite,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.photo_camera, size: 12, color: InquestorColors.pureWhite),
+                        SizedBox(width: 4),
+                        Text(
+                          'Take Photo',
+                          style: TextStyle(
+                            color: InquestorColors.pureWhite,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const PopupMenuItem(
-                  value: ImageSource.gallery,
-                  child: Row(
-                    children: [
-                      Icon(Icons.photo_library_outlined, size: 16, color: InquestorColors.graphite),
-                      SizedBox(width: 8),
-                      Text('Upload File', style: TextStyle(fontSize: 12.5)),
-                    ],
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () => _pickImage(slot, ImageSource.gallery),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: InquestorColors.pureWhite,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: InquestorColors.hairlineBorder),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.file_upload_outlined, size: 12, color: InquestorColors.graphite),
+                        SizedBox(width: 4),
+                        Text(
+                          'Upload',
+                          style: TextStyle(
+                            color: InquestorColors.graphite,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: InquestorColors.pureWhite,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: InquestorColors.hairlineBorder),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_a_photo_outlined, size: 13, color: InquestorColors.graphite),
-                    SizedBox(width: 5),
-                    Text(
-                      'Capture',
-                      style: TextStyle(
-                        color: InquestorColors.graphite,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ],
@@ -1167,39 +1206,80 @@ class AuditStagingPageState extends State<AuditStagingPage>
 
     // Client-side instant evaluation
     final items = LocalDeterministicEvaluator.evaluate(_claims!);
+    final int passedCount = items.where((i) => i.passed).length;
+    final bool allPassed = passedCount == items.length;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: InquestorColors.pureWhite,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: InquestorColors.hairlineBorder, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: InquestorColors.graphite.withValues(alpha: 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                'TIER 2: DETERMINISTIC FAST-FAIL CHECKS',
-                style: TextStyle(
-                  color: InquestorColors.graphiteSubtle,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TIER 2: DETERMINISTIC FAST-FAIL CHECKS',
+                    style: TextStyle(
+                      color: InquestorColors.graphite,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'Sub-5ms Mathematical & Physical Cross-Validation',
+                    style: TextStyle(
+                      color: InquestorColors.softSlate,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'Instant Local Analysis',
-                style: TextStyle(
-                  color: InquestorColors.softSlate,
-                  fontSize: 10.5,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                decoration: BoxDecoration(
+                  color: allPassed
+                      ? InquestorColors.forestGreen.withValues(alpha: 0.1)
+                      : InquestorColors.coralRed.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: allPassed
+                        ? InquestorColors.forestGreen.withValues(alpha: 0.3)
+                        : InquestorColors.coralRed.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  allPassed
+                      ? '✓ $passedCount/${items.length} CHECKS VERIFIED'
+                      : '⚠ ${items.length - passedCount} DISCREPANCY DETECTED',
+                  style: TextStyle(
+                    color: allPassed ? InquestorColors.forestGreen : InquestorColors.coralRed,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           ...items.map((item) => _buildDeterministicRow(item)),
         ],
       ),
@@ -1207,48 +1287,133 @@ class AuditStagingPageState extends State<AuditStagingPage>
   }
 
   Widget _buildDeterministicRow(AuditCheckItem item) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
+    final lowerDetails = item.details.toLowerCase();
+    final bool isSkipped = lowerDetails.contains('skipped') ||
+        lowerDetails.contains('not applicable') ||
+        lowerDetails.contains('no qr') ||
+        lowerDetails.contains('no barcode') ||
+        lowerDetails.contains('no serial');
+
+    final Color badgeBg;
+    final Color badgeFg;
+    final String badgeText;
+    final IconData badgeIcon;
+
+    if (!item.passed) {
+      badgeBg = InquestorColors.coralRed;
+      badgeFg = InquestorColors.pureWhite;
+      badgeText = 'FAILED';
+      badgeIcon = Icons.cancel;
+    } else if (isSkipped) {
+      badgeBg = const Color(0xFFE8E8E4);
+      badgeFg = InquestorColors.softSlate;
+      badgeText = 'SKIPPED';
+      badgeIcon = Icons.remove_circle_outline;
+    } else {
+      badgeBg = InquestorColors.forestGreen;
+      badgeFg = InquestorColors.pureWhite;
+      badgeText = 'PASSED';
+      badgeIcon = Icons.check_circle;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAF9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: item.passed ? const Color(0xFFEFEFEA) : InquestorColors.coralRed.withValues(alpha: 0.35),
+          width: 1.0,
+        ),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: item.passed
-                  ? InquestorColors.forestGreen.withValues(alpha: 0.1)
-                  : InquestorColors.coralRed.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(
-              item.passed ? Icons.check : Icons.close,
-              size: 13,
-              color: item.passed ? InquestorColors.forestGreen : InquestorColors.coralRed,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: InquestorColors.porcelain,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: InquestorColors.hairlineBorder),
+                      ),
+                      child: const Text(
+                        'TIER 2',
+                        style: TextStyle(
+                          color: InquestorColors.softSlate,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        style: const TextStyle(
+                          color: InquestorColors.graphite,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.1,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Prominent Status Badge Pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(badgeIcon, size: 12, color: badgeFg),
+                    const SizedBox(width: 4.5),
+                    Text(
+                      badgeText,
+                      style: TextStyle(
+                        color: badgeFg,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    color: item.passed ? InquestorColors.graphite : InquestorColors.coralRed,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  item.details,
-                  style: const TextStyle(
-                    color: InquestorColors.softSlate,
-                    fontSize: 11,
-                    height: 1.3,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: InquestorColors.pureWhite,
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(color: const Color(0xFFE8E8E4)),
+            ),
+            child: Text(
+              item.details,
+              style: TextStyle(
+                color: item.passed ? InquestorColors.graphiteSubtle : InquestorColors.coralRed,
+                fontSize: 11.5,
+                height: 1.4,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
         ],

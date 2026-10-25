@@ -84,7 +84,7 @@ void main() {
       expect(find.text('DEMO PRESET TESTBENCH'), findsOneWidget);
       expect(find.text('Reset Scanner'), findsOneWidget);
       expect(find.text('✓ HP Laptop (Authentic)'), findsOneWidget);
-      expect(find.text('✗ "Abibas" (Spoofed Logo)'), findsOneWidget);
+      expect(find.text('✗ "Phizer" / Spoofed Pharma Logo'), findsOneWidget);
       expect(find.text('⊘ Nike Sneaker (Out of Scope)'), findsOneWidget);
     });
 
@@ -166,18 +166,18 @@ void main() {
       );
 
       // Tap Counterfeit Preset
-      await tester.tap(find.text('✗ "Abibas" (Spoofed Logo)'));
+      await tester.tap(find.text('✗ "Phizer" / Spoofed Pharma Logo'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 700));
       await tester.pumpAndSettle();
 
       // Verify Red Discrepancy Card
       expect(find.text('TIER 0: COUNTERFEIT ANOMALY DETECTED'), findsOneWidget);
-      expect(find.text('Abibas (Spoof of Adidas)'), findsOneWidget);
+      expect(find.text('Phizer'), findsOneWidget);
       expect(find.text('94% Confidence'), findsOneWidget);
       expect(find.text('FORENSIC ANOMALY BREAKDOWN'), findsOneWidget);
       expect(
-        find.text("Trademark typography misspelling ('Abibas' instead of 'Adidas')"),
+        find.text("Brand spelling violation: 'Phizer' instead of 'Pfizer'"),
         findsOneWidget,
       );
 

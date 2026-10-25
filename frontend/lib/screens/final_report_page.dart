@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../landing_page.dart';
 import '../models/audit_models.dart';
 import '../theme/inquestor_theme.dart';
+import '../widgets/inquestor_background.dart';
 
 /// Final Forensic Evidence Report Page (Page 4).
 /// Displays verdict, discrepancy breakdown, audit checklist, and raw agent evidence.
@@ -56,13 +57,14 @@ class _FinalReportPageState extends State<FinalReportPage> {
 
     final String statusIconText = isVerified ? '✓' : (isSuspicious ? '✗' : '⚠');
 
-    return Scaffold(
-      backgroundColor: InquestorColors.porcelain,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(64),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: InquestorColors.porcelain,
+    return InquestorBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF9F6).withValues(alpha: 0.85),
             border: Border(
               bottom: BorderSide(
                 color: InquestorColors.hairlineBorder,
@@ -458,6 +460,7 @@ class _FinalReportPageState extends State<FinalReportPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
