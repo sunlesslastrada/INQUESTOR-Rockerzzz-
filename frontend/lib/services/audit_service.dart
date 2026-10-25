@@ -123,7 +123,7 @@ class AuditService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(request.toJson()),
           )
-          .timeout(const Duration(seconds: 40));
+          .timeout(const Duration(seconds: 45));
 
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
@@ -149,7 +149,7 @@ class AuditService {
       if (request.mockMode == true) {
         return _getMockVerificationResponse(request);
       }
-      throw ApiException('Verification timed out. TinyFish authority agent web search took longer than expected.');
+      throw ApiException('Portal verification timed out after 45s. Toggle demo preset or retry.', statusCode: 408);
     } catch (e) {
       if (e is ApiException) rethrow;
       if (request.mockMode == true) {

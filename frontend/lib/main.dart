@@ -26,6 +26,7 @@ class InquestorApp extends StatelessWidget {
         '/tier0': (context) => const Tier0InspectionPage(),
         '/page2': (context) => const AuditStagingPage(),
         '/report': (context) => const FinalReportPage(),
+        '/final_report': (context) => const FinalReportPage(),
       },
     );
   }

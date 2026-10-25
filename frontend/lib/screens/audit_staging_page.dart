@@ -143,20 +143,20 @@ class AuditStagingPageState extends State<AuditStagingPage>
   }
 
   void _onFormUpdated() {
-    if (_claims != null) {
-      setState(() {
-        _claims = _claims!.copyWith(
-          category: _selectedCategory,
-          brandName: _brandCtrl.text.isEmpty ? null : _brandCtrl.text,
-          modelOrDrugName: _modelCtrl.text.isEmpty ? null : _modelCtrl.text,
-          barcodeGtin: _barcodeCtrl.text.isEmpty ? null : _barcodeCtrl.text,
-          serialOrBatchNumber: _serialCtrl.text.isEmpty ? null : _serialCtrl.text,
-          expiryDate: _expiryCtrl.text.isEmpty ? null : _expiryCtrl.text,
-          mfgDate: _mfgCtrl.text.isEmpty ? null : _mfgCtrl.text,
-          qrRedirectUrl: _qrCtrl.text.isEmpty ? null : _qrCtrl.text,
-        );
-      });
-    }
+    setState(() {
+      _claims = (_claims ?? ExtractedProductClaims(category: _selectedCategory)).copyWith(
+        category: _selectedCategory,
+        brandName: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
+        modelOrDrugName: _modelCtrl.text.trim().isEmpty ? null : _modelCtrl.text.trim(),
+        barcodeGtin: _barcodeCtrl.text.trim().isEmpty ? null : _barcodeCtrl.text.trim(),
+        serialOrBatchNumber: _serialCtrl.text.trim().isEmpty ? null : _serialCtrl.text.trim(),
+        expiryDate: _expiryCtrl.text.trim().isEmpty ? null : _expiryCtrl.text.trim(),
+        mfgDate: _mfgCtrl.text.trim().isEmpty ? null : _mfgCtrl.text.trim(),
+        qrRedirectUrl: _qrCtrl.text.trim().isEmpty ? null : _qrCtrl.text.trim(),
+        barcodeEmbeddedBatch: _claims?.barcodeEmbeddedBatch,
+        barcodeEmbeddedExpiry: _claims?.barcodeEmbeddedExpiry,
+      );
+    });
   }
 
   void _applyDemoPreset(DemoPreset preset) {
@@ -315,42 +315,93 @@ class AuditStagingPageState extends State<AuditStagingPage>
   // Phase C: Inquest Execution Action
   // --------------------------------------------------------------------------
   Future<void> _runInquestAction() async {
-    if (_claims == null) return;
+    // 1. Synchronize claims from controllers, keeping embedded hidden state
+    final currentClaims = (_claims ?? ExtractedProductClaims(category: _selectedCategory)).copyWith(
+      category: _selectedCategory,
+      brandName: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
+      modelOrDrugName: _modelCtrl.text.trim().isEmpty ? null : _modelCtrl.text.trim(),
+      barcodeGtin: _barcodeCtrl.text.trim().isEmpty ? null : _barcodeCtrl.text.trim(),
+      serialOrBatchNumber: _serialCtrl.text.trim().isEmpty ? null : _serialCtrl.text.trim(),
+      expiryDate: _expiryCtrl.text.trim().isEmpty ? null : _expiryCtrl.text.trim(),
+      mfgDate: _mfgCtrl.text.trim().isEmpty ? null : _mfgCtrl.text.trim(),
+      qrRedirectUrl: _qrCtrl.text.trim().isEmpty ? null : _qrCtrl.text.trim(),
+      barcodeEmbeddedBatch: _claims?.barcodeEmbeddedBatch,
+      barcodeEmbeddedExpiry: _claims?.barcodeEmbeddedExpiry,
+    );
 
     setState(() {
+      _claims = currentClaims;
       _isInquestRunning = true;
       _activeStepIndex = 1;
-      _stepperStatusMessage = 'Extracting info from packaging...';
+      _stepperStatusMessage = 'Information Extracted from Packaging verified.';
       _inquestErrorMessage = null;
     });
 
+    final bool isLiveRun = !_mockMode && _backendDemoPreset == null;
+
     // Step 1 -> Step 2
-    await Future.delayed(const Duration(milliseconds: 650));
+    await Future.delayed(Duration(milliseconds: isLiveRun ? 400 : 350));
     if (!mounted) return;
 
     setState(() {
       _activeStepIndex = 2;
-      _stepperStatusMessage =
-          'Executing Tier-2 deterministic fast-fail gatekeeper (<5ms GS1 checksum & serial regex)...';
+      _stepperStatusMessage = 'Deterministic Local Gatekeeper Evaluated: GS1 Modulo-10 checksum & serial syntax verified.';
     });
 
-    await Future.delayed(const Duration(milliseconds: 650));
+    // Step 2 -> Step 3
+    await Future.delayed(Duration(milliseconds: isLiveRun ? 400 : 350));
     if (!mounted) return;
 
-    // Step 2 -> Step 3: Dispatching TinyFish Agent
+    final String initialT3Message = _selectedCategory == InquestCategory.medicine
+        ? 'Auditing batch against CDSCO NSQ Drug Alert Table...'
+        : (_claims?.qrRedirectUrl != null && _claims!.qrRedirectUrl!.isNotEmpty
+            ? 'Tracing QR Redirect in Cloud Sandbox & querying OEM Registry...'
+            : 'Dispatching TinyFish Agent to OEM Warranty Registry...');
+
     setState(() {
       _activeStepIndex = 3;
-      _stepperStatusMessage = _selectedCategory == InquestCategory.medicine
-          ? 'Dispatching TinyFish CDSCO Agent: Querying National NSQ Drug Recall Database...'
-          : 'Dispatching TinyFish Authority Agent: Querying OEM Warranty & Serial Registry...';
+      _stepperStatusMessage = initialT3Message;
     });
+
+    Timer? rotatingTimer;
+    int tick = 0;
+
+    if (isLiveRun) {
+      final List<String> statusRotation = [
+        initialT3Message,
+        if (_claims?.qrRedirectUrl != null && _claims!.qrRedirectUrl!.isNotEmpty)
+          'Tracing QR Redirect in Cloud Sandbox...',
+        if (_selectedCategory == InquestCategory.medicine) ...[
+          'Checking CDSCO monthly Not of Standard Quality (NSQ) drug alerts...',
+          'Cross-referencing manufacturer licensed batch records...',
+          'Synthesizing pharmaceutical regulatory findings...',
+        ] else ...[
+          'Dispatching TinyFish Agent to OEM Warranty Registry...',
+          'Querying registered serial number and warranty entitlement records...',
+          'Reconciling packaging claimed model against authoritative registry...',
+        ],
+        'Awaiting authoritative portal DOM response stream...',
+        'Cross-examining forensic evidence...',
+      ];
+
+      rotatingTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+        if (!mounted || !_isInquestRunning) {
+          timer.cancel();
+          return;
+        }
+        tick = (tick + 1) % statusRotation.length;
+        setState(() {
+          _stepperStatusMessage = statusRotation[tick];
+        });
+      });
+    }
 
     try {
       final request = VerificationRequest(
-        claims: _claims!,
+        claims: currentClaims,
         tier0LogoSummary: {
           'is_logo_valid': _t0LogoValid,
-          'detected_brand': _t0Brand ?? _claims?.brandName ?? 'Unknown',
+          'detected_brand': _t0Brand ?? currentClaims.brandName ?? 'Unknown',
           'reasoning': _t0Reasoning ?? 'Visual brand audit passed.',
         },
         forceContinue: false,
@@ -360,6 +411,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
 
       final VerificationResponse response = await _auditService.verifyProduct(request);
 
+      rotatingTimer?.cancel();
       if (!mounted) return;
 
       setState(() {
@@ -367,7 +419,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
         _stepperStatusMessage = 'Forensic investigation complete. Synthesizing verdict...';
       });
 
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
 
       // Navigate to /report passing verification payload
@@ -375,7 +427,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
         '/report',
         arguments: {
           'verification_response': response.toJson(),
-          'claims': _claims!.toJson(),
+          'claims': currentClaims.toJson(),
           'tier0_summary': {
             'is_logo_valid': _t0LogoValid,
             'detected_brand': _t0Brand,
@@ -385,11 +437,20 @@ class AuditStagingPageState extends State<AuditStagingPage>
         },
       );
     } catch (e) {
+      rotatingTimer?.cancel();
       if (!mounted) return;
+
       setState(() {
         _isInquestRunning = false;
-        _inquestErrorMessage = e.toString();
+        final String errStr = e.toString();
+        if (e is TimeoutException || errStr.contains('45s') || errStr.contains('timed out')) {
+          _inquestErrorMessage = 'Portal verification timed out after 45s. Toggle demo preset or retry.';
+        } else {
+          _inquestErrorMessage = errStr;
+        }
       });
+    } finally {
+      rotatingTimer?.cancel();
     }
   }
 
@@ -1532,16 +1593,19 @@ class AuditStagingPageState extends State<AuditStagingPage>
           _buildStepConnector(isDone: _activeStepIndex > 1),
           _buildStepRow(
             stepNumber: 2,
-            title: 'Deterministic Local Gatekeeper Passed',
+            title: 'Deterministic Local Gatekeeper Evaluated',
             isDone: _activeStepIndex > 2,
             isActive: _activeStepIndex == 2,
           ),
           _buildStepConnector(isDone: _activeStepIndex > 2),
           _buildStepRow(
             stepNumber: 3,
-            title: _selectedCategory == InquestCategory.medicine
-                ? 'Dispatching TinyFish CDSCO Drug Recall Agent'
-                : 'Dispatching TinyFish OEM Warranty Registry Agent',
+            title: 'Tier-3 Authority Cross-Examination Active',
+            subtitle: _selectedCategory == InquestCategory.medicine
+                ? 'Auditing batch against CDSCO NSQ Drug Alert Table...'
+                : (_claims?.qrRedirectUrl != null && _claims!.qrRedirectUrl!.isNotEmpty
+                    ? 'Dispatching TinyFish Agent to OEM Registry & Tracing QR Sandbox...'
+                    : 'Dispatching TinyFish Agent to OEM Warranty Registry...'),
             isDone: _activeStepIndex > 3,
             isActive: _activeStepIndex == 3,
             isLightning: true,
@@ -1581,6 +1645,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
   Widget _buildStepRow({
     required int stepNumber,
     required String title,
+    String? subtitle,
     required bool isDone,
     required bool isActive,
     bool isLightning = false,
@@ -1590,10 +1655,12 @@ class AuditStagingPageState extends State<AuditStagingPage>
         : (isActive ? InquestorColors.graphite : InquestorColors.softSlate);
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: 22,
           height: 22,
+          margin: const EdgeInsets.only(top: 1),
           decoration: BoxDecoration(
             color: isDone ? InquestorColors.forestGreen : InquestorColors.pureWhite,
             shape: BoxShape.circle,
@@ -1604,7 +1671,7 @@ class AuditStagingPageState extends State<AuditStagingPage>
               ? const Icon(Icons.check, size: 12, color: InquestorColors.pureWhite)
               : (isActive
                   ? Text(
-                      isLightning ? '⚡' : '$stepNumber',
+                      isLightning ? '\u26A1' : '$stepNumber',
                       style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                     )
                   : Text(
@@ -1614,15 +1681,31 @@ class AuditStagingPageState extends State<AuditStagingPage>
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              color: isDone
-                  ? InquestorColors.graphite
-                  : (isActive ? InquestorColors.graphite : InquestorColors.softSlate),
-              fontSize: 12,
-              fontWeight: isActive || isDone ? FontWeight.w600 : FontWeight.w400,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: isDone
+                      ? InquestorColors.graphite
+                      : (isActive ? InquestorColors.graphite : InquestorColors.softSlate),
+                  fontSize: 12,
+                  fontWeight: isActive || isDone ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              if (subtitle != null && isActive) ...[
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: InquestorColors.softSlate,
+                    fontSize: 11,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ],

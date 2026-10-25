@@ -145,8 +145,8 @@ class VerificationRequest {
       'claims': claims.toJson(),
       'tier0_logo_summary': tier0LogoSummary,
       'force_continue': forceContinue,
-      if (mockMode != null) 'mock_mode': mockMode,
-      if (demoPreset != null) 'demo_preset': demoPreset,
+      'mock_mode': mockMode ?? false,
+      'demo_preset': demoPreset,
     };
   }
 }
